@@ -21,5 +21,8 @@
   "homepage": "https://github.com/nherment/seneca-archive",
   "devDependencies": {
     "mocha": "1.18.2"
+  },
+  "dependencies": {
+    "underscore": "^1.6.0"
   }
 }

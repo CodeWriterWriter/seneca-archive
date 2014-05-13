@@ -9,17 +9,17 @@ describe('RulesEngine', function() {
   describe('entity type', function() {
 
 
-    var rulesEngine = new RulesEngine({base: 'foo', type: 'bar'}, [])
+    var rulesEngine = new RulesEngine({base: 'foo', name: 'bar'}, [])
 
     it('match', function() {
       var entity = {
         entity$: {
           base: 'foo',
-          type: 'bar'
+          name: 'bar'
         }
       }
 
-      var match = rulesEngine.matchEntity(entity)
+      var match = rulesEngine.applies(entity)
 
       assert.ok(match)
 
@@ -30,11 +30,11 @@ describe('RulesEngine', function() {
       var entity = {
         entity$: {
           base: 'fi',
-          type: 'bar'
+          name: 'bar'
         }
       }
 
-      var match = rulesEngine.matchEntity(entity)
+      var match = rulesEngine.applies(entity)
 
       assert.ok(!match)
 
@@ -46,11 +46,11 @@ describe('RulesEngine', function() {
       var entity = {
         entity$: {
           base: 'foo',
-          type: 'barman'
+          name: 'barman'
         }
       }
 
-      var match = rulesEngine.matchEntity(entity)
+      var match = rulesEngine.applies(entity)
 
       assert.ok(!match)
 
@@ -63,7 +63,7 @@ describe('RulesEngine', function() {
 
       try{
 
-        rulesEngine.matchEntity(entity)
+        rulesEngine.applies(entity)
         assert.fail('expected an error')
 
       } catch(missingTypeError) {
