@@ -1,14 +1,14 @@
 {
-  "name": "seneca-dual",
+  "name": "seneca-archive",
   "version": "0.1.0",
-  "description": "redirect some actions to another seneca instance",
-  "main": "dual.js",
+  "description": "redirect some entity actions to another seneca instance that handles archived entities",
+  "main": "archive.js",
   "scripts": {
     "test": "mocha test --reporter spec"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/nherment/seneca-dual.git"
+    "url": "git://github.com/nherment/seneca-archive.git"
   },
   "keywords": [
     "seneca"
@@ -16,7 +16,7 @@
   "author": "Nicolas Herment <nherment@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nherment/seneca-dual/issues"
+    "url": "https://github.com/nherment/seneca-archive/issues"
   },
-  "homepage": "https://github.com/nherment/seneca-dual"
+  "homepage": "https://github.com/nherment/seneca-archive"
 }
