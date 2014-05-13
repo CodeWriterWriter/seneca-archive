@@ -1,0 +1,22 @@
+{
+  "name": "seneca-dual",
+  "version": "0.1.0",
+  "description": "redirect some actions to another seneca instance",
+  "main": "dual.js",
+  "scripts": {
+    "test": "mocha test --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nherment/seneca-dual.git"
+  },
+  "keywords": [
+    "seneca"
+  ],
+  "author": "Nicolas Herment <nherment@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nherment/seneca-dual/issues"
+  },
+  "homepage": "https://github.com/nherment/seneca-dual"
+}
