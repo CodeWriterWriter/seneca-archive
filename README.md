@@ -37,7 +37,7 @@ Usage
 
     seneca.use('archive', {
 
-      archivalInstance: seneca2,
+      archivalInstance: senecaInstance,
 
       entities: [
         {
