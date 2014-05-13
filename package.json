@@ -23,6 +23,8 @@
     "mocha": "1.18.2"
   },
   "dependencies": {
-    "underscore": "^1.6.0"
+    "underscore": "^1.6.0",
+    "seneca": "^0.5.17",
+    "async": "^0.8.0"
   }
 }

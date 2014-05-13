@@ -35,21 +35,17 @@ You will also need [seneca](https://github.com/rjrodger/seneca).
 Usage
 -----
 
+    var oneMonthAgo = ...
+    var oneYearAgo  = ...
+
     seneca.use('archive', {
 
       archivalInstance: senecaInstance,
 
-      entities: [
-        {
-          base: 'sys',
-          type: 'user'
-        }
-      ],
-
       conditions: {
         'sys/user': [
-          {lastLogin: {$lt: oneYearAgo}},
-          {lastLogin: null, active: false, registrationDate: oneMonthAgo}
+          { lastLogin: { $lt: oneYearAgo } },
+          { lastLogin: null, active: false, registrationDate: oneMonthAgo }
         ]
       }
 
@@ -61,13 +57,9 @@ Usage
 
 This is the seneca secondary instance used to manage the archived objects.
 
-#### entities
-
-A list of entity types for which the archival process should apply
-
 #### conditions
 
-For each entity type, a list of conditions that should be met for an entity to be archived.
+For each entity type that should be archived, a list of conditions that should be met for an entity to be archived.
 
 Triggering the archival process
 -------------------------------
