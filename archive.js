@@ -21,6 +21,10 @@ function archive(options) {
   if(options.hasOwnProperty('checkExistsBeforeUpdate')) {
     checkExistsBeforeUpdate = options.checkExistsBeforeUpdate
   }
+  var directArchival = true
+  if(options.hasOwnProperty('directArchival')) {
+    directArchival = options.directArchival
+  }
 
 
   var secondarySeneca = options.archivalInstance
@@ -42,12 +46,15 @@ function archive(options) {
   primarySeneca.add({role: 'entity', cmd: 'list'}  , listOverride)
 
 
+  // archiving API
+  primarySeneca.add({role: 'archive', cmd: 'scan'}, archivePrimaryEntities)
+
   function saveOverride(args, callback) {
 
     var entity = args.ent
     var self = this
 
-    if(entity.archived$ || (!entity.id$ && !entity.id && shouldBeArchived(entity))) {
+    if(entity.archive$ || (entity.archive$ !== false && !entity.id$ && !entity.id && shouldBeArchived(entity))) {
 
       secondarySeneca.act(args, callback)
 
@@ -97,23 +104,42 @@ function archive(options) {
     async.parallel([
       function(callback) {
 
-        self.prior(args, function(err, result) {
-          primaryError = err
-          primaryResult = result || []
-        })
+        if(args.q.archived$ === true) {
+
+          primaryResult = []
+          callback()
+
+        } else {
+
+          self.prior(args, function(err, result) {
+            primaryError = err
+            primaryResult = result || []
+            callback()
+          })
+
+        }
 
       },
       function(callback) {
 
-        secondarySeneca.act(args, function(err, result) {
-          secondaryError = err
-          secondaryResult = result || []
-          // TODO: stamp archived$ flag on entities
-        })
+        if(args.q.archived$ === false) {
+
+          secondaryResult = []
+          callback()
+
+        } else {
+
+          secondarySeneca.act(args, function(err, result) {
+            secondaryError = err
+            secondaryResult = result || []
+            // TODO: stamp archived$ flag on entities
+            callback()
+          })
+
+        }
 
       }
-    ], callback);
-    this.prior(args, function() {
+    ], function() {
 
       if(primaryError) {
         callback(primaryError, undefined)
@@ -137,6 +163,15 @@ function archive(options) {
     return false
   }
 
+  function isEntityTypeSupported(typeDef) {
+    for(var i = 0 ; i < rules.length ; i++) {
+      if(rules[i].applies(entity) && rules[i].match(entity)) {
+        return true
+      }
+    }
+    return false
+  }
+
   function executePrimaryThenFallbackToSecondary(args, callback) {
     this.prior(args, function(priorErr, priorResult) {
       if(priorErr) {
@@ -151,6 +186,79 @@ function archive(options) {
       } else {
         callback(undefined, priorResult)
       }
+    })
+  }
+
+  function archivePrimaryEntities(args, callback) {
+    var skip  = args.skip  || 0
+    var limit = args.limit || 10
+    var entityTypeStr = _.isString(args.entity) ? args.entity : SenecaType.stringify(args.entity)
+
+    var entMgr = primarySeneca.make(entityTypeStr)
+    entMgr.list$({skip$: skip, limit$: limit, archived$: false}, function(err, results) {
+      if(err) {
+        callback(err, undefined)
+      } else {
+        var info = {
+          count: 0,
+          hits: 0
+        }
+        var entitiesToArchive = []
+        if(results) {
+          info.hits = results.length
+          for(var i = 0 ; i < results.length ; i++) {
+
+            if(shouldBeArchived(results[i])) {
+              entitiesToArchive.push(results[i])
+            }
+          }
+        }
+        if(entitiesToArchive.length > 0) {
+
+          async.map(entitiesToArchive, archiveEntity, function(err, results) {
+
+            if(results) {
+              info.count = results.length
+            }
+            callback(err, info)
+          })
+
+        } else {
+          callback(undefined, info)
+        }
+      }
+
+    })
+
+  }
+
+  function archiveEntity(entity, callback) {
+    var id = entity.id
+    primarySeneca.log.info('archiving entity', id)
+
+    var archive = _.clone(entity)
+
+    delete archive.id // make the DB layer believe this is a new entity
+    archive.id$ = id
+
+    var secondaryEnt = secondarySeneca.make(entity.entity$)
+
+    secondaryEnt.save$(archive, function(err, result) {
+
+      if(err) {
+        callback(err, undefined)
+      } else {
+
+        entity.remove$({id: entity.id}, function(err) {
+
+          if(err) {
+            callback(err, undefined)
+          } else {
+            callback(undefined, result)
+          }
+        })
+      }
+
     })
   }
 

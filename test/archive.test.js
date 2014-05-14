@@ -121,5 +121,66 @@ describe('archive', function() {
 
   })
 
+  it('pre-archive', function(done) {
+    var foobarEntity = primarySeneca.make('foo/bar')
+
+    foobarEntity.list$(function(err, result) {
+
+      assert.ok(!err, err ? err.message + err.stack : undefined)
+
+      var primaryObj   = result[0]
+
+      primaryObj.db    = 'secondary'
+
+      primaryObj.save$(function(err, result) {
+
+        assert.ok(!err, err ? err.message + err.stack : undefined)
+
+        var foobarEntitySecondary = secondarySeneca.make('foo/bar')
+        foobarEntitySecondary.load$({id: primaryObj.id}, function(err, nonArchivedEntity) {
+
+          assert.ok(!err, err ? err.message + err.stack : undefined)
+          assert.ok(!nonArchivedEntity, 'the non archived entity should not be in the secondary DB')
+
+          done()
+
+        })
+
+      })
+
+    })
+
+  })
+
+  it('archive', function(done) {
+    primarySeneca.act({role: 'archive', cmd: 'scan', skip: 0, limit: 100, entity: 'foo/bar'}, function(err, info) {
+      assert.ok(!err, err ? err.message + err.stack : undefined)
+
+      assert.ok(info)
+      assert.equal(info.count, 1)
+
+      var foobarEntitySecondary = secondarySeneca.make('foo/bar')
+      foobarEntitySecondary.list$(function(err, archivedEntities) {
+
+        assert.ok(!err, err ? err.message + err.stack : undefined)
+        assert.ok(archivedEntities)
+        assert.equal(archivedEntities.length, 2, 'the newly archived entity should be in the secondary DB')
+
+
+        var foobarEntityPrimary = primarySeneca.make('foo/bar')
+        foobarEntityPrimary.list$({archived$: false}, function(err, nonArchivedEntities) {
+
+          assert.ok(!err, err ? err.message + err.stack : undefined)
+          assert.ok(nonArchivedEntities)
+          assert.equal(nonArchivedEntities.length, 0, 'the newly archived entity should not be in the primary DB')
+
+
+          done()
+
+        })
+      })
+    })
+  })
+
 
 })

@@ -41,7 +41,8 @@ Usage
     seneca.use('archive', {
 
       archivalInstance: senecaInstance,
-
+      directArchival: true,
+      checkExistsBeforeUpdate: true,
       conditions: {
         'sys/user': [
           { lastLogin: { $lt: oneYearAgo } },
@@ -57,6 +58,16 @@ Usage
 
 This is the seneca secondary instance used to manage the archived objects.
 
+#### directArchival
+
+if directArchival is enabled/disabled (enabled by default). When anabled, new entities are checked against the archival
+conditions. If they match, these entities are directly saved in the archival DB.
+
+#### checkExistsBeforeUpdate
+
+check in which DB the updated entity lives. true by default.
+This should be set to false if the DB driver throws an error when a non existing entity is updated.
+
 #### conditions
 
 For each entity type that should be archived, a list of conditions that should be met for an entity to be archived.
@@ -68,7 +79,7 @@ The archival process should be triggered externally. seneca-archive does not hav
 
 Archiving consists in doing a full database scan for each entity and then moving the right entities into the secondary DB.
 
-    seneca.act({role: 'archive', cmd: 'scan', from: 0, to: 100, entity: 'sys/user'}, function(args, done) {
+    seneca.act({role: 'archive', cmd: 'scan', start: 0, limit: 100, entity: 'sys/user'}, function(args, done) {
 
     })
 
