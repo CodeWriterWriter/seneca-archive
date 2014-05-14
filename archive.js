@@ -1,10 +1,12 @@
 
-var assert = require('assert')
-var async = require('async')
+var assert      = require('assert')
+var async       = require('async')
+var _           = require('underscore')
 
-var SenecaType = require('./lib/SenecaType.js')
+var SenecaType  = require('./lib/SenecaType.js')
+var RulesEngine = require('./lib/RulesEngine.js')
 
-var pluginName = 'archive'
+var pluginName  = 'archive'
 
 
 function archive(options) {
@@ -12,16 +14,24 @@ function archive(options) {
   var primarySeneca = this
 
   assert.ok(options.archivalInstance, 'missing archivalInstance option. It should be a seneca instance that manages your archival DB')
+  assert.ok(options.conditions, 'missing conditions option.')
+
+
+  var checkExistsBeforeUpdate = true
+  if(options.hasOwnProperty('checkExistsBeforeUpdate')) {
+    checkExistsBeforeUpdate = options.checkExistsBeforeUpdate
+  }
+
 
   var secondarySeneca = options.archivalInstance
 
   var entities = options.entities || []
   var rules = []
 
-  for(var entityTypeStr in options.rules) {
-    if(options.rules.hasOwnProperty(entityTypeStr)) {
+  for(var entityTypeStr in options.conditions) {
+    if(options.conditions.hasOwnProperty(entityTypeStr)) {
       var typeDef = SenecaType.parse(entityTypeStr)
-      rules.push(new RulesEngine(typeDef), options.rules[entityTypeStr])
+      rules.push(new RulesEngine(typeDef, options.conditions[entityTypeStr]))
     }
   }
 
@@ -35,11 +45,34 @@ function archive(options) {
   function saveOverride(args, callback) {
 
     var entity = args.ent
+    var self = this
 
-    if(entity.archived$ || (!entity.id && shouldBeArchived(entity))) {
+    if(entity.archived$ || (!entity.id$ && !entity.id && shouldBeArchived(entity))) {
+
       secondarySeneca.act(args, callback)
+
+    } else if(entity.id && checkExistsBeforeUpdate) {
+
+      // Note: some 'update' implementation do not throw an error if the entity does not already exist
+      // so we need to check if the entity exists in the primary DB before we update it there.
+      // * Perf: * Maybe we should check if entity exists in the secondary first and then fall back on the
+      // primary but my rationale is that we should check the primary first because it has better perf.
+
+      var loadEnt = primarySeneca.make(args.ent.entity$)
+      loadEnt.load$({id: args.ent.id}, function(err, result) {
+        if(err || !result) {
+          primarySeneca.log.debug('entity does not exist in primary. saving it in secondary', args.ent)
+          secondarySeneca.act(args, callback)
+        } else {
+          primarySeneca.log.debug('entity saved in primary', args.ent)
+          self.prior(args, callback)
+        }
+      })
+
     } else {
+
       executePrimaryThenFallbackToSecondary.call(this, args, callback)
+
     }
 
   }
