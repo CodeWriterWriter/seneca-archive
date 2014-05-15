@@ -174,7 +174,9 @@ function archive(options) {
 
   function executePrimaryThenFallbackToSecondary(args, callback) {
     this.prior(args, function(priorErr, priorResult) {
-      if(priorErr) {
+      if(args.archived$ === false) {
+        callback(priorErr, priorResult)
+      } else if(priorErr) {
         secondarySeneca.act(args, function(secondaryErr, secondaryResult) {
           if(secondaryErr) {
             callback(priorErr, priorResult)
@@ -249,7 +251,7 @@ function archive(options) {
         callback(err, undefined)
       } else {
 
-        entity.remove$({id: entity.id}, function(err) {
+        entity.remove$({id: entity.id, archived$: false}, function(err) {
 
           if(err) {
             callback(err, undefined)

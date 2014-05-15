@@ -79,7 +79,7 @@ The archival process should be triggered externally. seneca-archive does not hav
 
 Archiving consists in doing a full database scan for each entity and then moving the right entities into the secondary DB.
 
-    seneca.act({role: 'archive', cmd: 'scan', start: 0, limit: 100, entity: 'sys/user'}, function(args, done) {
+    seneca.act({role: 'archive', cmd: 'scan', skip: 0, limit: 100, entity: 'sys/user'}, function(args, done) {
 
     })
 
