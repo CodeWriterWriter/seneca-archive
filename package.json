@@ -1,6 +1,6 @@
 {
   "name": "seneca-archive",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "redirect some entity actions to another seneca instance that handles archived entities",
   "main": "archive.js",
   "scripts": {
